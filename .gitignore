@@ -6,3 +6,9 @@ derby.log
 data/delta
 data/medallion_1
 .DS_Store
+.venv/
+.idea/
+__pycache__/
+# Files written locally by the notebooks
+ch03/countries.csv
+zorder.html
