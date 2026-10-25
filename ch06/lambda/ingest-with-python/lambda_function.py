@@ -15,9 +15,9 @@ def lambda_handler(event, context):
 
     if event and event['requestContext']['http']['method'] == 'POST':
         try:
-            input = pa.RecordBatch.from_pylist(json.loads(event['body']))
+            input = pa.RecordBatch.from_pylist(json.loads(event['body']), schema=schema())
             dt = DeltaTable(table_url)
-            write_deltalake(dt, data=input, schema=schema(), mode='append')
+            write_deltalake(dt, data=input, mode='append')
             status = 201
             body = json.dumps({'message' : 'Thanks for the data!'})
         except Exception as err:

@@ -10,8 +10,12 @@ replacements for things that don't exist when Spark runs remotely:
     /opt/spark/work-dir       -> WORK
     spark.conf.set            -> set_conf (serverless rejects most Spark configs)
     !tree / rm -rf            -> tree() / rm() on volume paths
+
+For tables written locally with the `deltalake` package (chapter 6), upload_dir() and
+download_dir() copy them to and from a volume, since delta-rs can't reach volumes directly.
 """
 import os
+import shutil
 
 from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
@@ -74,3 +78,16 @@ def upload_dir(local: str, remote: str) -> None:
             dst = f"{remote.rstrip('/')}/{os.path.relpath(src, local)}"
             with open(src, "rb") as fh:
                 w.files.upload(dst, fh, overwrite=True)
+
+
+def download_dir(remote: str, local: str) -> None:
+    """Copy a volume directory (e.g. a table written by Spark) to a local directory, replacing it."""
+    shutil.rmtree(local, ignore_errors=True)
+    for entry in w.files.list_directory_contents(remote):
+        dst = os.path.join(local, entry.path.rstrip("/").rsplit("/", 1)[-1])
+        if entry.is_directory:
+            download_dir(entry.path, dst)
+        else:
+            os.makedirs(local, exist_ok=True)
+            with open(dst, "wb") as fh:
+                shutil.copyfileobj(w.files.download(entry.path).contents, fh)

@@ -51,7 +51,7 @@ def test_json_body(delta_table_url):
     assert result['statusCode'] == 201, result['body']
 
     dt = DeltaTable(delta_table_url)
-    assert len(dt.files()) == 1, 'No data was added to the table!'
+    assert len(dt.file_uris()) == 1, 'No data was added to the table!'
 
 def test_invalid_json_body(empty_table_url):
     event = {

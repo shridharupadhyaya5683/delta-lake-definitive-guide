@@ -3,17 +3,29 @@
 This file contains the code snippets from the chapter in a format that can be
 easily doctested with `make test`
 
+The snippets are updated for `deltalake` 1.x (the book uses 0.x). The API changes are:
+
+* `DeltaTable.files()` was removed. Use `file_uris()` for absolute paths, or the `path`
+  column of `get_add_actions()` for paths relative to the table.
+* `write_deltalake()` no longer takes `max_rows_per_file`, `max_rows_per_group`,
+  `min_rows_per_group` or `schema`. File sizes are controlled with `target_file_size`
+  (in bytes, and never smaller than one file per partition per write) and
+  `writer_properties`.
+
+`ch06_notebook.ipynb` runs the same snippets and then moves the tables to and from
+Databricks.
+
 
 ## Getting Started
 
 ```
 >>> from deltalake import DeltaTable
 >>> dt = DeltaTable('./data/deltatbl-partitioned')
->>> dt.files()
+>>> dt.get_add_actions(flatten=True).column('path').to_pylist()
 ['c2=foo0/part-00000-2bcc9ff6-0551-4401-bd22-d361a60627e3.c000.snappy.parquet', 'c2=foo1/part-00000-786c7455-9587-454f-9a4c-de0b22b62bbd.c000.snappy.parquet', 'c2=foo0/part-00001-ca647ee7-f1ad-4d70-bf02-5d1872324d6f.c000.snappy.parquet', 'c2=foo1/part-00001-1c702e73-89b5-465a-9c6a-25f7559cd150.c000.snappy.parquet']
 >>> df = dt.to_pandas()
 >>> df
-   c1	 c2
+   c1    c2
 0   0  foo0
 1   2  foo0
 2   4  foo0
@@ -31,7 +43,7 @@ easily doctested with `make test`
 
 ```
 >>> dt.to_pandas(partitions=[('c2', '=', 'foo0')])
-   c1	 c2
+   c1    c2
 0   0  foo0
 1   2  foo0
 2   4  foo0
@@ -41,7 +53,7 @@ easily doctested with `make test`
 ```
 
 ```
->>> dt.files([('c2', '=', 'foo0')])
+>>> [f.rsplit('deltatbl-partitioned/', 1)[1] for f in dt.file_uris([('c2', '=', 'foo0')])]
 ['c2=foo0/part-00000-2bcc9ff6-0551-4401-bd22-d361a60627e3.c000.snappy.parquet', 'c2=foo0/part-00001-ca647ee7-f1ad-4d70-bf02-5d1872324d6f.c000.snappy.parquet']
 >>>
 ```
@@ -71,21 +83,28 @@ easily doctested with `make test`
 
 This example will use the CO2 data referened below to generate a partitioned table with only a few records per `.parquet` file to demonstrate file statistics usage.
 
+`deltalake` 1.x writes at least one file per partition per write, so instead of
+`max_rows_per_file=4` the months are appended in three batches of four. Each `year`
+partition ends up with up to three files of four rows.
+
 ```
 >>> import pandas as pa
 >>> from deltalake import DeltaTable, write_deltalake
 >>> df = pa.read_csv('data/co2_mm_mlo.csv', comment='#')
 >>> len(df) > 0
 True
->>> write_deltalake('data/gen/filestats', data=df, partition_by=['year'], max_rows_per_file=4, max_rows_per_group=4, min_rows_per_group=1)
+>>> for months in ([1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]):
+...     write_deltalake('data/gen/filestats', data=df[df.month.isin(months)].reset_index(drop=True), partition_by=['year'], mode='append')
 >>>
 ```
+
+The book's table had 198 files; the NOAA file grows every month, so the count does too.
 
 ```
 >>> from deltalake import DeltaTable
 >>> dt = DeltaTable('./data/gen/filestats')
->>> len(dt.files())
-198
+>>> len(dt.file_uris()) >= 198
+True
 >>> df = dt.to_pandas(filters=[('year', '=', 2022), ('month', '>=', 9)])
 >>> len(df)
 4
@@ -103,7 +122,7 @@ True
 >>> from deltalake import write_deltalake, DeltaTable
 >>> write_deltalake('./data/gen/co2_monthly', df)
 >>> dt = DeltaTable('./data/gen/co2_monthly')
->>> len(dt.files()) > 0
+>>> len(dt.file_uris()) > 0
 True
 >>> df = dt.to_pandas()
 >>> len(df) > 0

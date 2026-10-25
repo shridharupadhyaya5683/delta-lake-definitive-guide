@@ -10,7 +10,7 @@ def lambda_handler(event, context):
     return {
         'version' : dt.version(),
         'table' : url,
-        'files' : dt.files(),
+        'files' : dt.file_uris(),
     'metadata' : {
             'name' : metadata.name,
             'created_time' : metadata.created_time,

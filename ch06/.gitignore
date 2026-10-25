@@ -1,2 +1,7 @@
 .virtualenv
 rust-example/Cargo.lock
+# Downloaded with `make download`
+data/co2_mm_mlo.csv
+# Tables written by the snippets and notebook
+data/gen/*
+!data/gen/.gitkeep
