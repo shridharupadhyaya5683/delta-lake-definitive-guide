@@ -12,3 +12,5 @@ __pycache__/
 # Files written locally by the notebooks
 ch03/countries.csv
 zorder.html
+# HTML reports written by delta-stats
+delta_stats_*.html
