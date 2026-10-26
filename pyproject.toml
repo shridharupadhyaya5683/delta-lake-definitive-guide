@@ -6,17 +6,13 @@ dependencies = [
     "pandas-stubs~=2.3.3",
 ]
 
-[project.scripts]
-# Per-file stats report for any Delta table: delta-stats <path | /Volumes/... | catalog.schema.table>
-delta-stats = "delta_stats:main"
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# Install dldg.py and delta_stats.py into the venv so notebooks in any chapter folder can import them
+# Install dldg.py into the venv so notebooks in any chapter folder can import it
 [tool.hatch.build.targets.wheel]
-only-include = ["dldg.py", "delta_stats.py"]
+only-include = ["dldg.py"]
 
 [dependency-groups]
 dev = [
