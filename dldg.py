@@ -17,7 +17,6 @@ download_dir() copy them to and from a volume, since delta-rs can't reach volume
 import os
 import shutil
 
-from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.errors import NotFound
 
@@ -30,10 +29,13 @@ DATASETS = f"/Volumes/{CATALOG}/{SCHEMA}/datasets"
 WORK = f"/Volumes/{CATALOG}/{SCHEMA}/work"
 
 if "DATABRICKS_RUNTIME_VERSION" in os.environ:
-    # Inside a Databricks notebook (e.g. a Git folder in the browser): reuse its session and credentials
-    spark = DatabricksSession.builder.getOrCreate()
+    # Inside a Databricks notebook or job: reuse its session and credentials.
+    # databricks-connect isn't installed there, so use the runtime's own SparkSession.
+    from pyspark.sql import SparkSession
+    spark = SparkSession.builder.getOrCreate()
     w = WorkspaceClient()
 else:
+    from databricks.connect import DatabricksSession
     spark = DatabricksSession.builder.profile(PROFILE).serverless(True).getOrCreate()
     w = WorkspaceClient(profile=PROFILE)
 spark.sql(f"USE {CATALOG}.{SCHEMA}")
@@ -45,6 +47,17 @@ def set_conf(key: str, value: str) -> None:
         spark.conf.set(key, value)
     except Exception:
         print(f"Skipped {key}={value}: not settable on serverless compute")
+
+
+def batch_rows(query) -> list:
+    """(batchId, numInputRows) for each micro-batch of a streaming query.
+
+    recentProgress returns dicts in a Databricks notebook but StreamingQueryProgress objects over
+    Databricks Connect, where p["numInputRows"] is None; this works in both.
+    """
+    # Over Connect, StreamingQueryProgress subclasses dict, so test for the attribute, not the type
+    return [(p.batchId, p.numInputRows) if hasattr(p, "numInputRows") else (p["batchId"], p["numInputRows"])
+            for p in query.recentProgress]
 
 
 def tree(path: str, indent: str = "") -> None:
