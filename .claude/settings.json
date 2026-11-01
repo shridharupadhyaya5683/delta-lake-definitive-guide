@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(databricks current-user:*)",
+      "Bash(databricks warehouses list:*)",
+      "Bash(databricks workspace export:*)",
+      "Bash(databricks api post /api/2.0/sql/statements:*)",
+      "Bash(python:*)"
+    ]
+  }
+}
