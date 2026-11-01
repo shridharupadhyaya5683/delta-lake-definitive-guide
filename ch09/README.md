@@ -3,6 +3,12 @@
 
 The chapter content here covers the Streaming Medallion Architecture section of Chapter 9. 
 
+## Databricks Free Edition
+The notebooks in `notebooks/` are converted to run on Databricks Free Edition (serverless) through `dldg.py`; no Docker or Kafka needed.
+Everything runs from UC volumes; Kafka isn't used. The source is a landing folder, `/Volumes/workspace/dldg/work/ch09/landing/ecomm.v1.clickstream/`, that `produce()` appends JSON files to (built from the CSVs in `/Volumes/workspace/dldg/datasets/ecomm_behavior_data/`). The streaming `text` source reads it into the book's bronze columns (`value`, `topic`, `timestamp`).
+Run `medallion_bronze.ipynb`, then `medallion_silver.ipynb` (which streams into `workspace.dldg.silver_ecomm_clickstream`).
+The Docker and Kafka instructions below are the book's originals.
+
 ## Running the JupyterLab environment
 > note: kafka must be running and setup for the jupyter lab contents to work. See the note below under **Kafka**.
 ~~~
