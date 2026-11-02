@@ -5,7 +5,7 @@
 - Working through **Delta Lake: The Definitive Guide**, a weeks-long self-study of Delta Lake and Spark, and
   **Business Intelligence with Databricks SQL** (Packt).
 - Write in American English. Keep answers crisp and to the point.
-- **Current chapter: 9** (Delta Lake book).
+- **Current chapter: 10** (Delta Lake book).
 
 ## Environment
 - OS: Ubuntu. IDE: PyCharm with the Claude Code plugin.
